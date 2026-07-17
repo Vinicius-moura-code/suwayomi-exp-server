@@ -31,9 +31,31 @@ Vars `DATABASE_*` / `BIND_*` são do entrypoint da imagem oficial, não do `:ser
 URL do Postgres **sem** prefixo `jdbc:` (o server adiciona).
 
 ### Fase 2: Monitoring e Observabilidade
-- Implementar mecanismos para monitorar erros frequentes
-- Armazenar e analisar recorrência de erros
-- Criar base para futuras correções automáticas ou alerts
+- [x] MVP Error Store: fingerprint + frequência no DB + GraphQL (`errorIncidents`)
+- [ ] Métricas de performance (Micrometer + Prometheus)
+- [ ] Dashboard / alertas (cortes seguintes)
+
+#### Error Store (MVP)
+
+Erros de Javalin (exceto auth) e GraphQL são agregados por fingerprint.
+
+No GraphiQL (`http://localhost:4567/api/graphql`):
+
+```graphql
+query {
+  errorIncidents(limit: 20, orderBy: OCCURRENCE_COUNT) {
+    id
+    exceptionClass
+    message
+    source
+    occurrenceCount
+    lastSeenAt
+    context
+  }
+}
+```
+
+Mutations: `deleteErrorIncident`, `clearErrorIncidents` (requerem auth).
 
 ### Fase 3: Melhorias no Tracking
 - Corrigir problemas existentes de tracking

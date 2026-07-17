@@ -33,8 +33,10 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withTimeoutOrNull
 import org.eclipse.jetty.server.ServerConnector
 import suwayomi.tachidesk.global.GlobalAPI
+import suwayomi.tachidesk.global.impl.ErrorIncidentRecorder
 import suwayomi.tachidesk.graphql.GraphQL
 import suwayomi.tachidesk.graphql.types.AuthMode
+import suwayomi.tachidesk.graphql.types.ErrorIncidentSource
 import suwayomi.tachidesk.i18n.LocalizationHelper
 import suwayomi.tachidesk.manga.MangaAPI
 import suwayomi.tachidesk.opds.OpdsAPI
@@ -61,6 +63,20 @@ object JavalinSetup {
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
 
     fun <T> future(block: suspend CoroutineScope.() -> T): CompletableFuture<T> = scope.future(block = block)
+
+    private fun recordJavalinError(
+        throwable: Throwable,
+        ctx: Context,
+    ) {
+        ErrorIncidentRecorder.record(
+            throwable,
+            ErrorIncidentSource.JAVALIN,
+            mapOf(
+                "path" to ctx.path(),
+                "method" to ctx.method().name,
+            ),
+        )
+    }
 
     fun javalinSetup() {
         val app =
@@ -256,32 +272,38 @@ object JavalinSetup {
 
         exception(NullPointerException::class.java) { e, ctx ->
             logger.error(e) { "NullPointerException while handling the request" }
+            recordJavalinError(e, ctx)
             ctx.status(404)
         }
         exception(NoSuchElementException::class.java) { e, ctx ->
             logger.error(e) { "NoSuchElementException while handling the request" }
+            recordJavalinError(e, ctx)
             ctx.status(404)
         }
         exception(IOException::class.java) { e, ctx ->
             logger.error(e) { "IOException while handling the request" }
+            recordJavalinError(e, ctx)
             ctx.status(500)
             ctx.result(e.message ?: "Internal Server Error")
         }
 
         exception(IllegalArgumentException::class.java) { e, ctx ->
             logger.error(e) { "IllegalArgumentException while handling the request" }
+            recordJavalinError(e, ctx)
             ctx.status(400)
             ctx.result(e.message ?: "Bad Request")
         }
 
         exception(UnauthorizedException::class.java) { e, ctx ->
             logger.error(e) { "UnauthorizedException while handling the request" }
+            // Auth noise — do not persist as an error incident
             ctx.status(HttpStatus.UNAUTHORIZED)
             ctx.result(e.message ?: "Unauthorized")
         }
 
         exception(ForbiddenException::class.java) { e, ctx ->
             logger.error(e) { "ForbiddenException while handling the request" }
+            // Auth noise — do not persist as an error incident
             ctx.status(HttpStatus.FORBIDDEN)
             ctx.result(e.message ?: "Forbidden")
         }

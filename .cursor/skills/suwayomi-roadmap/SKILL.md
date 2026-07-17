@@ -20,10 +20,10 @@ Desenvolver melhorias de qualidade, correções e novas funcionalidades no fork 
 ### Fase 2: Monitoring e Observabilidade
 **Objetivo**: Monitorar erros frequentes, armazenar recorrências e facilitar correções futuras.
 
-- Integrar sistema de coleta de erros (com stack trace, contexto, frequência)
-- Métricas de performance (usando Micrometer + Prometheus?)
-- Dashboard ou página interna simples para visualizar erros recorrentes
-- Armazenamento persistente de incidentes
+- [x] MVP Error Store (fingerprint, stack, frequência, GraphQL `errorIncidents`)
+- [ ] Métricas de performance (Micrometer + Prometheus)
+- [ ] Dashboard ou página interna para visualizar erros
+- [ ] Alertas / correções automáticas
 
 ### Fase 3: Melhorias no Tracking
 **Objetivo**: Resolver problemas atuais de tracking e melhorar a experiência.
@@ -61,4 +61,4 @@ Sempre que eu mencionar qualquer task deste roadmap:
 
 ---
 
-**Status atual**: Fase 1 concluída. Próximo foco: Fase 2 (Monitoring e Observabilidade).
+**Status atual**: Fase 2 MVP (Error Store) feito. Próximo: métricas Prometheus ou Fase 3 (Tracking).

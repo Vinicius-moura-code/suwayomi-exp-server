@@ -23,7 +23,9 @@ import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.map
+import suwayomi.tachidesk.global.impl.ErrorIncidentRecorder
 import suwayomi.tachidesk.graphql.server.subscriptions.ApolloSubscriptionProtocolHandler
+import suwayomi.tachidesk.graphql.types.ErrorIncidentSource
 import suwayomi.tachidesk.server.JavalinSetup.future
 import tools.jackson.module.kotlin.jacksonObjectMapper
 
@@ -59,6 +61,15 @@ class TachideskGraphQLServer(
                     val path = handlerParameters.path
 
                     logger.error(exception) { "GraphQL execution failed due to" }
+
+                    ErrorIncidentRecorder.record(
+                        exception,
+                        ErrorIncidentSource.GRAPHQL,
+                        mapOf(
+                            "path" to path.toString(),
+                            "location" to sourceLocation.toString(),
+                        ),
+                    )
 
                     val error =
                         ExceptionWhileDataFetching(
