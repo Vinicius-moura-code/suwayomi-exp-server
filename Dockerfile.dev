@@ -1,0 +1,21 @@
+# Development image: runs the server via Gradle with the repo bind-mounted at /app.
+# Not a production image — see Suwayomi-Server-docker for that.
+#
+# --continuous recompiles on change but does not reliably restart the Javalin
+# process; prefer host `scripts/dev/run.sh` for daily work.
+
+FROM eclipse-temurin:21-jdk
+
+WORKDIR /app
+
+# Seed only the Gradle wrapper so the image can resolve Gradle offline of the mount.
+# Full sources are expected from the compose bind mount (.:/app).
+COPY gradlew gradlew
+COPY gradle/wrapper gradle/wrapper
+
+RUN chmod +x gradlew \
+    && ./gradlew --version
+
+EXPOSE 4567
+
+CMD ["./gradlew", ":server:run", "--stacktrace"]

@@ -7,6 +7,9 @@ gradle.properties
 !.idea/runConfigurations
 .kotlin
 
+# Local docker-compose / scripts/dev data directory
+/data/
+
 # Ignore Gradle build output directory
 build
 server/out

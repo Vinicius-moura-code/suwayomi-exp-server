@@ -1,0 +1,66 @@
+# Dev stack for Suwayomi-Server
+#
+# Daily workflow (recommended):
+#   scripts/dev/up.sh          # postgres only (profile: infra)
+#   scripts/dev/run.sh         # Gradle on the host → localhost:4567
+#
+# Optional fully-containerized app:
+#   docker compose --profile app up --build
+#
+# Note: DATABASE_*/BIND_* env vars from the official Docker image do NOT apply
+# here — Gradle/Java needs -Dsuwayomi.tachidesk.config.server.* (see run.sh).
+
+services:
+  postgres:
+    profiles: ["infra", "app"]
+    image: postgres:16-alpine
+    container_name: suwayomi-postgres
+    environment:
+      POSTGRES_DB: suwayomi
+      POSTGRES_USER: suwayomi
+      POSTGRES_PASSWORD: suwayomi
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5433:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U suwayomi -d suwayomi"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    restart: unless-stopped
+
+  suwayomi:
+    profiles: ["app"]
+    build:
+      context: .
+      dockerfile: Dockerfile.dev
+    container_name: suwayomi-dev
+    environment:
+      TZ: America/Sao_Paulo
+      # Passed through to the JVM (Gradle run). Format must NOT include jdbc: prefix.
+      JAVA_TOOL_OPTIONS: >-
+        -Dsuwayomi.tachidesk.config.server.ip=0.0.0.0
+        -Dsuwayomi.tachidesk.config.server.port=4567
+        -Dsuwayomi.tachidesk.config.server.systemTrayEnabled=false
+        -Dsuwayomi.tachidesk.config.server.initialOpenInBrowserEnabled=false
+        -Dsuwayomi.tachidesk.config.server.databaseType=POSTGRESQL
+        -Dsuwayomi.tachidesk.config.server.databaseUrl=postgresql://postgres:5432/suwayomi
+        -Dsuwayomi.tachidesk.config.server.databaseUsername=suwayomi
+        -Dsuwayomi.tachidesk.config.server.databasePassword=suwayomi
+    volumes:
+      - .:/app
+      - gradle_cache:/root/.gradle
+      - ./data:/root/.local/share/Tachidesk
+    ports:
+      - "4567:4567"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: unless-stopped
+    stdin_open: true
+    tty: true
+
+volumes:
+  postgres_data:
+  gradle_cache:

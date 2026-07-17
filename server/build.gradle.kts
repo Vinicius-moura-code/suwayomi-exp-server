@@ -124,6 +124,18 @@ application {
     mainClass.set(MainClass)
 }
 
+// Forward -Dsuwayomi.* from the Gradle CLI to the :server:run application JVM
+// (Gradle -D flags otherwise only apply to the Gradle daemon, not the app).
+tasks.named<JavaExec>("run") {
+    systemProperties(
+        System
+            .getProperties()
+            .mapKeys { it.key.toString() }
+            .mapValues { it.value.toString() }
+            .filterKeys { it.startsWith("suwayomi.") },
+    )
+}
+
 sourceSets {
     main {
         resources {
