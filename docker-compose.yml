@@ -3,6 +3,7 @@
 # Daily workflow (recommended):
 #   scripts/dev/up.sh          # postgres only (profile: infra)
 #   scripts/dev/run.sh         # Gradle on the host → localhost:4567
+#   scripts/dev/monitoring-up.sh  # Prometheus + Grafana (profile: monitoring)
 #
 # Optional fully-containerized app:
 #   docker compose --profile app up --build
@@ -61,6 +62,44 @@ services:
     stdin_open: true
     tty: true
 
+  prometheus:
+    profiles: ["monitoring"]
+    image: prom/prometheus:v3.2.1
+    container_name: suwayomi-prometheus
+    command:
+      - --config.file=/etc/prometheus/prometheus.yml
+      - --storage.tsdb.path=/prometheus
+      - --web.enable-lifecycle
+    volumes:
+      - ./monitoring/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus_data:/prometheus
+    ports:
+      - "9090:9090"
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    restart: unless-stopped
+
+  grafana:
+    profiles: ["monitoring"]
+    image: grafana/grafana:11.5.2
+    container_name: suwayomi-grafana
+    environment:
+      GF_SECURITY_ADMIN_USER: admin
+      GF_SECURITY_ADMIN_PASSWORD: admin
+      GF_USERS_ALLOW_SIGN_UP: "false"
+      GF_AUTH_ANONYMOUS_ENABLED: "true"
+      GF_AUTH_ANONYMOUS_ORG_ROLE: Viewer
+    volumes:
+      - ./monitoring/grafana/provisioning:/etc/grafana/provisioning:ro
+      - grafana_data:/var/lib/grafana
+    ports:
+      - "3000:3000"
+    depends_on:
+      - prometheus
+    restart: unless-stopped
+
 volumes:
   postgres_data:
   gradle_cache:
+  prometheus_data:
+  grafana_data:

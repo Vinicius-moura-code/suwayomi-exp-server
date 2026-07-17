@@ -55,6 +55,7 @@ Layering for domain features:
 # Preferred local loop (Postgres via Compose)
 scripts/dev/up.sh
 scripts/dev/run.sh                 # or: scripts/dev/run.sh --h2
+scripts/dev/monitoring-up.sh       # Prometheus :9090 + Grafana :3000
 scripts/dev/test.sh
 scripts/dev/logs.sh
 scripts/dev/down.sh

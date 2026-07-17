@@ -18,6 +18,7 @@ ktlint = "1.8.0"
 koin = "4.2.2"
 moko = "0.26.4"
 jcef = "144.0.15-g72717cf-chromium-144.0.7559.172-api-1.21-262-b37"
+micrometer = "1.16.2"
 
 [libraries]
 # Kotlin
@@ -81,6 +82,10 @@ exposed-migrations = "com.github.Suwayomi:exposed-migrations:3.10.1"
 
 # Dependency Injection
 koin-core = { module = "io.insert-koin:koin-core", version.ref = "koin" }
+
+# Metrics
+micrometer-core = { module = "io.micrometer:micrometer-core", version.ref = "micrometer" }
+micrometer-registry-prometheus = { module = "io.micrometer:micrometer-registry-prometheus", version.ref = "micrometer" }
 
 # tray icon
 systemtray-core = "com.dorkbox:SystemTray:4.4"
@@ -256,6 +261,10 @@ systemtray = [
     "systemtray-core",
     "systemtray-utils",
     "systemtray-desktop"
+]
+micrometer = [
+    "micrometer-core",
+    "micrometer-registry-prometheus",
 ]
 polyglot = [
     "polyglot-core",

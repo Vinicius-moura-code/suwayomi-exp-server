@@ -59,6 +59,9 @@ dependencies {
     // Exposed Migrations
     implementation(libs.exposed.migrations)
 
+    // Metrics (Prometheus scrape)
+    implementation(libs.bundles.micrometer)
+
     // tray icon
     implementation(libs.bundles.systemtray)
 

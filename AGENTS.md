@@ -16,12 +16,13 @@ Estou fazendo um fork do Suwayomi-Server para:
 #### Como usar (dia a dia)
 
 ```bash
-scripts/dev/up.sh          # sobe Postgres
-scripts/dev/run.sh         # server no host + Postgres (localhost:5433)
-scripts/dev/run.sh --h2    # server com H2 (sem Docker)
-scripts/dev/test.sh        # ./gradlew :server:test
-scripts/dev/logs.sh        # logs do Compose
-scripts/dev/down.sh        # derruba a stack
+scripts/dev/up.sh                 # sobe Postgres
+scripts/dev/run.sh                # server no host + Postgres (localhost:5433)
+scripts/dev/run.sh --h2           # server com H2 (sem Docker)
+scripts/dev/monitoring-up.sh      # Prometheus + Grafana
+scripts/dev/test.sh               # ./gradlew :server:test
+scripts/dev/logs.sh               # logs do Compose
+scripts/dev/down.sh               # derruba a stack (infra/app/monitoring)
 ```
 
 App 100% no container (opcional): `docker compose --profile app up --build`
@@ -32,8 +33,9 @@ URL do Postgres **sem** prefixo `jdbc:` (o server adiciona).
 
 ### Fase 2: Monitoring e Observabilidade
 - [x] MVP Error Store: fingerprint + frequência no DB + GraphQL (`errorIncidents`)
-- [ ] Métricas de performance (Micrometer + Prometheus)
-- [ ] Dashboard / alertas (cortes seguintes)
+- [x] Micrometer + Prometheus scrape (`GET /api/metrics`) + Grafana no Compose
+- [ ] Alertmanager / alertas (corte seguinte)
+- [ ] Dashboard HTML de erros (Error Store segue via GraphQL)
 
 #### Error Store (MVP)
 
@@ -56,6 +58,18 @@ query {
 ```
 
 Mutations: `deleteErrorIncident`, `clearErrorIncidents` (requerem auth).
+
+#### Métricas (MVP)
+
+Com o server rodando:
+
+| O quê | URL |
+|--------|-----|
+| Prometheus metrics | http://localhost:4567/api/metrics |
+| Prometheus UI | http://localhost:9090 |
+| Grafana | http://localhost:3000 (`admin`/`admin`; anonymous Viewer) |
+
+`/api/metrics` fica **sem auth** de propósito (scrape local via Docker). Não expor em produção sem rede/auth.
 
 ### Fase 3: Melhorias no Tracking
 - Corrigir problemas existentes de tracking
