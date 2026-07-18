@@ -249,7 +249,7 @@ object WebInterfaceManager {
     private fun scheduleWebUIUpdateCheck() {
         HAScheduler.descheduleCron(currentUpdateTaskId)
 
-        val isAutoUpdateDisabled = !isAutoUpdateEnabled() || serverConfig.webUIFlavor.value == WebUIFlavor.CUSTOM
+        val isAutoUpdateDisabled = !isAutoUpdateEnabled() || serverConfig.webUIFlavor.value.isLocalManaged()
         if (isAutoUpdateDisabled) {
             return
         }
@@ -300,7 +300,12 @@ object WebInterfaceManager {
     }
 
     suspend fun setupWebUI() {
-        if (serverConfig.webUIFlavor.value == WebUIFlavor.CUSTOM) {
+        if (serverConfig.webUIFlavor.value.isLocalManaged()) {
+            logger.info {
+                "Using local-managed WebUI flavor \"${serverConfig.webUIFlavor.value.uiName}\" " +
+                    "(serve files from data webUI directory; no GitHub download)"
+            }
+            updateServedWebUIInfo(serverConfig.webUIFlavor.value)
             serveWebUI()
             return
         }
@@ -840,8 +845,12 @@ object WebInterfaceManager {
         flavor: WebUIFlavor,
         currentVersion: String = getLocalVersion(),
         raiseError: Boolean = false,
-    ): Pair<String, Boolean> =
-        try {
+    ): Pair<String, Boolean> {
+        if (flavor.isLocalManaged()) {
+            return Pair(currentVersion, false)
+        }
+
+        return try {
             val isServedWebUIForCurrentFlavor = flavor.uiName == getServedWebUIFlavor().uiName
             val latestCompatibleVersion = getLatestCompatibleVersion(flavor)
             val isVersionUpdateAvailable = latestCompatibleVersion != currentVersion
@@ -857,4 +866,5 @@ object WebInterfaceManager {
 
             Pair("", false)
         }
+    }
 }

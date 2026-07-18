@@ -12,7 +12,9 @@ import gg.jte.TemplateEngine
 import io.github.oshai.kotlinlogging.KotlinLogging
 import io.javalin.Javalin
 import io.javalin.apibuilder.ApiBuilder.after
+import io.javalin.apibuilder.ApiBuilder.get
 import io.javalin.apibuilder.ApiBuilder.path
+import io.javalin.apibuilder.ApiBuilder.post
 import io.javalin.config.RoutesConfig
 import io.javalin.http.Context
 import io.javalin.http.HandlerType
@@ -33,11 +35,14 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withTimeoutOrNull
 import org.eclipse.jetty.server.ServerConnector
 import suwayomi.tachidesk.global.GlobalAPI
+import suwayomi.tachidesk.global.impl.ErrorIncidentRecorder
 import suwayomi.tachidesk.graphql.GraphQL
 import suwayomi.tachidesk.graphql.types.AuthMode
+import suwayomi.tachidesk.graphql.types.ErrorIncidentSource
 import suwayomi.tachidesk.i18n.LocalizationHelper
 import suwayomi.tachidesk.manga.MangaAPI
 import suwayomi.tachidesk.opds.OpdsAPI
+import suwayomi.tachidesk.server.metrics.MetricsRegistry
 import suwayomi.tachidesk.server.user.ForbiddenException
 import suwayomi.tachidesk.server.user.UnauthorizedException
 import suwayomi.tachidesk.server.user.UserType
@@ -60,7 +65,35 @@ object JavalinSetup {
 
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
 
+    private const val ATTR_REQUEST_START_NS = "metrics.requestStartNs"
+
     fun <T> future(block: suspend CoroutineScope.() -> T): CompletableFuture<T> = scope.future(block = block)
+
+    private fun recordJavalinError(
+        throwable: Throwable,
+        ctx: Context,
+    ) {
+        ErrorIncidentRecorder.record(
+            throwable,
+            ErrorIncidentSource.JAVALIN,
+            mapOf(
+                "path" to ctx.path(),
+                "method" to ctx.method().name,
+            ),
+        )
+    }
+
+    private fun metricsPathGroup(path: String): String {
+        val apiPrefix = ServerSubpath.maybeAddAsPrefix("/api/")
+        return when {
+            path == ServerSubpath.maybeAddAsPrefix("/api/metrics") || path.endsWith("/api/metrics") -> "/api/metrics"
+            path.startsWith(apiPrefix + "graphql") || path.contains("/api/graphql") -> "/api/graphql"
+            path.startsWith(apiPrefix + "v1/") || path.contains("/api/v1/") -> "/api/v1"
+            path.startsWith(apiPrefix + "opds") || path.contains("/api/opds") -> "/api/opds"
+            path.startsWith(apiPrefix) || path.contains("/api/") -> "/api"
+            else -> "/other"
+        }
+    }
 
     fun javalinSetup() {
         val app =
@@ -115,6 +148,11 @@ object JavalinSetup {
                 config.routes.defineCore()
                 config.routes.apiBuilder {
                     path(ServerSubpath.maybeAddAsPrefix("api/")) {
+                        get("metrics") { ctx ->
+                            ctx.contentType("text/plain; version=0.0.4; charset=utf-8")
+                            ctx.result(MetricsRegistry.scrape())
+                        }
+
                         path("v1/") {
                             GlobalAPI.defineEndpoints()
                             MangaAPI.defineEndpoints()
@@ -155,6 +193,23 @@ object JavalinSetup {
 
     fun RoutesConfig.defineCore() {
         val loginPath = ServerSubpath.maybeAddAsPrefix("/login.html")
+
+        before { ctx ->
+            ctx.attribute(ATTR_REQUEST_START_NS, System.nanoTime())
+        }
+        after { ctx ->
+            val start = ctx.attribute<Long>(ATTR_REQUEST_START_NS) ?: return@after
+            val requestPath = ctx.path()
+            if (requestPath.endsWith("/api/metrics") || requestPath.endsWith("/metrics")) {
+                return@after
+            }
+            MetricsRegistry.recordHttpRequest(
+                method = ctx.method().name,
+                status = ctx.statusCode(),
+                pathGroup = metricsPathGroup(requestPath),
+                durationNanos = System.nanoTime() - start,
+            )
+        }
 
         get(loginPath) { ctx ->
             val locale: Locale = LocalizationHelper.ctxToLocale(ctx)
@@ -212,8 +267,12 @@ object JavalinSetup {
                     listOf(".png", ".jpg", ".ico").any { ctx.path().endsWith(it) }
             val isPreFlight = ctx.method() == HandlerType.OPTIONS
             val isApi = ctx.path().startsWith(ServerSubpath.maybeAddAsPrefix("/api/"))
+            val isMetrics =
+                ctx.path() == ServerSubpath.maybeAddAsPrefix("/api/metrics") ||
+                    ctx.path().endsWith("/api/metrics")
 
-            val requiresAuthentication = !isPreFlight && !isPageIcon && !isWebManifest
+            // /api/metrics is intentionally open for local Prometheus scrape (dev only).
+            val requiresAuthentication = !isPreFlight && !isPageIcon && !isWebManifest && !isMetrics
             if (!requiresAuthentication) {
                 return@beforeMatched
             }
@@ -256,32 +315,38 @@ object JavalinSetup {
 
         exception(NullPointerException::class.java) { e, ctx ->
             logger.error(e) { "NullPointerException while handling the request" }
+            recordJavalinError(e, ctx)
             ctx.status(404)
         }
         exception(NoSuchElementException::class.java) { e, ctx ->
             logger.error(e) { "NoSuchElementException while handling the request" }
+            recordJavalinError(e, ctx)
             ctx.status(404)
         }
         exception(IOException::class.java) { e, ctx ->
             logger.error(e) { "IOException while handling the request" }
+            recordJavalinError(e, ctx)
             ctx.status(500)
             ctx.result(e.message ?: "Internal Server Error")
         }
 
         exception(IllegalArgumentException::class.java) { e, ctx ->
             logger.error(e) { "IllegalArgumentException while handling the request" }
+            recordJavalinError(e, ctx)
             ctx.status(400)
             ctx.result(e.message ?: "Bad Request")
         }
 
         exception(UnauthorizedException::class.java) { e, ctx ->
             logger.error(e) { "UnauthorizedException while handling the request" }
+            // Auth noise — do not persist as an error incident
             ctx.status(HttpStatus.UNAUTHORIZED)
             ctx.result(e.message ?: "Unauthorized")
         }
 
         exception(ForbiddenException::class.java) { e, ctx ->
             logger.error(e) { "ForbiddenException while handling the request" }
+            // Auth noise — do not persist as an error incident
             ctx.status(HttpStatus.FORBIDDEN)
             ctx.result(e.message ?: "Forbidden")
         }

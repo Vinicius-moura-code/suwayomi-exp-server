@@ -23,6 +23,7 @@ import suwayomi.tachidesk.graphql.types.MangaType
 import suwayomi.tachidesk.graphql.types.MetaInput
 import suwayomi.tachidesk.manga.impl.Library
 import suwayomi.tachidesk.manga.impl.Manga
+import suwayomi.tachidesk.manga.impl.MangaVisibility
 import suwayomi.tachidesk.manga.impl.update.IUpdater
 import suwayomi.tachidesk.manga.model.table.ChapterTable
 import suwayomi.tachidesk.manga.model.table.MangaMetaTable
@@ -244,6 +245,32 @@ class MangaMutation {
         Manga.modifyMangaMeta(meta.mangaId, meta.key, meta.value)
 
         return SetMangaMetaPayload(clientMutationId, meta)
+    }
+
+    data class UpdateMangaVisibilityInput(
+        val clientMutationId: String? = null,
+        val mangaId: Int,
+        val hideFromHistory: Boolean? = null,
+        val hideFromUpdates: Boolean? = null,
+    )
+
+    data class UpdateMangaVisibilityPayload(
+        val clientMutationId: String?,
+        val manga: MangaType,
+    )
+
+    @RequireAuth
+    fun updateMangaVisibility(input: UpdateMangaVisibilityInput): UpdateMangaVisibilityPayload? {
+        val (clientMutationId, mangaId, hideFromHistory, hideFromUpdates) = input
+
+        MangaVisibility.updateVisibility(mangaId, hideFromHistory, hideFromUpdates)
+
+        val manga =
+            transaction {
+                MangaType(MangaTable.selectAll().where { MangaTable.id eq mangaId }.first())
+            }
+
+        return UpdateMangaVisibilityPayload(clientMutationId, manga)
     }
 
     data class DeleteMangaMetaInput(

@@ -41,6 +41,18 @@ enum class WebUIFlavor(
         "Suwayomi-VUI-Web",
     ),
 
+    /**
+     * Official UI for the suwayomi-exp fork. Served from the local `webUI` data directory
+     * (same as [CUSTOM]); not downloaded/updated from GitHub.
+     */
+    EXPUUI(
+        "ExpUI",
+        "",
+        "",
+        "",
+        "Suwayomi-ExpUI",
+    ),
+
     CUSTOM(
         "Custom",
         "repoURL",
@@ -50,10 +62,17 @@ enum class WebUIFlavor(
     ),
     ;
 
+    /** Flavors that only serve files already present under the server `webUI` folder. */
+    fun isLocalManaged(): Boolean = this == CUSTOM || this == EXPUUI
+
     companion object {
+        /** Bundled/default upstream UI (used by channel BUNDLED fallbacks). */
         val default: WebUIFlavor = WEBUI
 
-        fun from(value: String): WebUIFlavor = entries.find { it.uiName == value } ?: default
+        fun from(value: String): WebUIFlavor =
+            entries.find {
+                it.uiName.equals(value, ignoreCase = true) || it.name.equals(value, ignoreCase = true)
+            } ?: default
 
         val current: WebUIFlavor
             get() = serverConfig.webUIFlavor.value
