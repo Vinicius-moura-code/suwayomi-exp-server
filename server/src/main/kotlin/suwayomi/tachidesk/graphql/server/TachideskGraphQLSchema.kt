@@ -111,7 +111,7 @@ val schema =
                 TopLevelObject(TrackQuery()),
                 TopLevelObject(UpdateQuery()),
             ),
-            mutations =
+        mutations =
             listOf(
                 TopLevelObject(BackupMutation()),
                 TopLevelObject(CategoryMutation()),
