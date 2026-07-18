@@ -15,6 +15,7 @@ import org.jetbrains.exposed.v1.core.Op
 import org.jetbrains.exposed.v1.core.SortOrder
 import org.jetbrains.exposed.v1.core.greater
 import org.jetbrains.exposed.v1.core.less
+import org.jetbrains.exposed.v1.core.notInList
 import org.jetbrains.exposed.v1.jdbc.andWhere
 import org.jetbrains.exposed.v1.jdbc.selectAll
 import org.jetbrains.exposed.v1.jdbc.transactions.transaction
@@ -42,6 +43,7 @@ import suwayomi.tachidesk.graphql.server.primitives.lessNotUnique
 import suwayomi.tachidesk.graphql.server.primitives.maybeSwap
 import suwayomi.tachidesk.graphql.types.ChapterNodeList
 import suwayomi.tachidesk.graphql.types.ChapterType
+import suwayomi.tachidesk.manga.impl.MangaVisibility
 import suwayomi.tachidesk.manga.model.table.ChapterTable
 import suwayomi.tachidesk.manga.model.table.MangaTable
 import java.util.concurrent.CompletableFuture
@@ -171,6 +173,8 @@ class ChapterQuery {
         val isDownloaded: BooleanFilter? = null,
         val pageCount: IntFilter? = null,
         val inLibrary: BooleanFilter? = null,
+        val excludeHiddenFromHistory: Boolean? = null,
+        val excludeHiddenFromUpdates: Boolean? = null,
         override val and: List<ChapterFilter>? = null,
         override val or: List<ChapterFilter>? = null,
         override val not: ChapterFilter? = null,
@@ -229,6 +233,20 @@ class ChapterQuery {
                         innerJoin(MangaTable)
                     }
                     res.andWhere { libraryOp }
+                }
+
+                if (filter?.excludeHiddenFromHistory == true) {
+                    val hiddenIds = MangaVisibility.mangaIdsWithFlag(MangaVisibility.HIDE_FROM_HISTORY)
+                    if (hiddenIds.isNotEmpty()) {
+                        res.andWhere { ChapterTable.manga notInList hiddenIds }
+                    }
+                }
+
+                if (filter?.excludeHiddenFromUpdates == true) {
+                    val hiddenIds = MangaVisibility.mangaIdsWithFlag(MangaVisibility.HIDE_FROM_UPDATES)
+                    if (hiddenIds.isNotEmpty()) {
+                        res.andWhere { ChapterTable.manga notInList hiddenIds }
+                    }
                 }
 
                 res.applyOps(condition, filter)

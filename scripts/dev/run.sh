@@ -38,6 +38,8 @@ done
 SYS_PROPS=(
   "-Dsuwayomi.tachidesk.config.server.systemTrayEnabled=false"
   "-Dsuwayomi.tachidesk.config.server.initialOpenInBrowserEnabled=false"
+  # Official UI for this fork (served from local data webUI/; install via scripts/dev/install-ui.sh)
+  "-Dsuwayomi.tachidesk.config.server.webUIFlavor=ExpUI"
 )
 
 if [[ "${USE_H2}" -eq 1 ]]; then

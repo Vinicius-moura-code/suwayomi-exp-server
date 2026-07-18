@@ -17,8 +17,9 @@ Estou fazendo um fork do Suwayomi-Server para:
 
 ```bash
 scripts/dev/up.sh                 # sobe Postgres
-scripts/dev/run.sh                # server no host + Postgres (localhost:5433)
+scripts/dev/run.sh                # server no host + Postgres (localhost:5433); Flavor ExpUI
 scripts/dev/run.sh --h2           # server com H2 (sem Docker)
+scripts/dev/install-ui.sh         # build suwayomi-exp-ui → data webUI/ (ExpUI)
 scripts/dev/monitoring-up.sh      # Prometheus + Grafana
 scripts/dev/test.sh               # ./gradlew :server:test
 scripts/dev/logs.sh               # logs do Compose
@@ -26,6 +27,8 @@ scripts/dev/down.sh               # derruba a stack (infra/app/monitoring)
 ```
 
 App 100% no container (opcional): `docker compose --profile app up --build`
+
+**UI oficial deste fork:** Flavor **`ExpUI`** (default). Serve `%LOCALAPPDATA%/Tachidesk/webUI` (ou `~/.local/share/Tachidesk/webUI`); sem download GitHub. Dev hot-reload da UI: repo `suwayomi-exp-ui` em `:3000`.
 
 **Importante:** no fluxo Gradle, use `-Dsuwayomi.tachidesk.config.server.*` (ou `scripts/dev/run.sh`).
 Vars `DATABASE_*` / `BIND_*` são do entrypoint da imagem oficial, não do `:server:run`.
@@ -77,16 +80,45 @@ Com o server rodando:
 - Adicionar persistência inteligente
 - Melhorar filtros e busca de obras
 
-### Fase 4: Melhorias na WebUI — **PRÓXIMA**
-- Botão para limpar histórico
-- Categorias com bloqueio de privacidade/segurança
-- Opção de ocultar obras do histórico e da aba "Updates"
-- Outras melhorias de usabilidade
+### Fase 4: Melhorias na WebUI — **EM ANDAMENTO (corte A)**
+- [x] **Corte A (Server + UI):** ocultar obras do Histórico/Updates
+  - Meta: `suwayomi.hideFromHistory` / `suwayomi.hideFromUpdates`
+  - Campos GraphQL: `Manga.hideFromHistory` / `hideFromUpdates`
+  - Mutation: `updateMangaVisibility`
+  - Filtros: `chapters(filter: { excludeHiddenFromHistory / excludeHiddenFromUpdates })`
+  - UI: filtros em History/Updates + toggles no menu da manga
+- [ ] Botão para limpar histórico (corte B)
+- [ ] Categorias com bloqueio de privacidade/segurança (corte C)
 
-Neste repo (Server): começar pelas **APIs GraphQL** que habilitam a UI.
-WebUI é outro repositório. Cortes sugeridos: A ocultar Histórico/Updates | B limpar histórico | C privacidade em categorias | D A+B.
+Neste repo (Server): APIs GraphQL primeiro.
+UI: `F:\workspace\suwayomi-exp\suwayomi-exp-ui`.
 
-Hub de continuidade (após move): `F:\workspace\suwayomi-exp\CONTEXT.md`
+Hub: `F:\workspace\suwayomi-exp\CONTEXT.md` + `AGENTS.md`
+
+#### Ocultar Histórico/Updates (corte A)
+
+```graphql
+mutation {
+  updateMangaVisibility(
+    input: { mangaId: 1, hideFromHistory: true, hideFromUpdates: true }
+  ) {
+    manga { id hideFromHistory hideFromUpdates }
+  }
+}
+
+query {
+  chapters(
+    filter: {
+      lastReadAt: { isNull: false, notEqualToAll: ["0"] }
+      excludeHiddenFromHistory: true
+    }
+    order: [{ by: LAST_READ_AT, byType: DESC }]
+    first: 50
+  ) {
+    nodes { id mangaId }
+  }
+}
+```
 
 ## Regras Importantes para o Agent
 - Sempre respeitar a arquitetura atual do projeto (GraphQL first, layers bem definidas)

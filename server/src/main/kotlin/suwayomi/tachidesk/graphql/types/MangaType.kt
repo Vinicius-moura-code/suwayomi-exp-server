@@ -18,6 +18,7 @@ import suwayomi.tachidesk.graphql.server.primitives.Node
 import suwayomi.tachidesk.graphql.server.primitives.NodeList
 import suwayomi.tachidesk.graphql.server.primitives.PageInfo
 import suwayomi.tachidesk.manga.impl.MangaList
+import suwayomi.tachidesk.manga.impl.MangaVisibility
 import suwayomi.tachidesk.manga.model.dataclass.MangaDataClass
 import suwayomi.tachidesk.manga.model.dataclass.toGenreList
 import suwayomi.tachidesk.manga.model.table.MangaStatus
@@ -173,6 +174,20 @@ class MangaType(
 
     fun meta(dataFetchingEnvironment: DataFetchingEnvironment): CompletableFuture<List<MangaMetaType>> =
         dataFetchingEnvironment.getValueFromDataLoader<Int, List<MangaMetaType>>("MangaMetaDataLoader", id)
+
+    fun hideFromHistory(dataFetchingEnvironment: DataFetchingEnvironment): CompletableFuture<Boolean> =
+        meta(dataFetchingEnvironment).thenApply { metas ->
+            MangaVisibility.isEnabled(
+                metas.firstOrNull { it.key == MangaVisibility.HIDE_FROM_HISTORY }?.value,
+            )
+        }
+
+    fun hideFromUpdates(dataFetchingEnvironment: DataFetchingEnvironment): CompletableFuture<Boolean> =
+        meta(dataFetchingEnvironment).thenApply { metas ->
+            MangaVisibility.isEnabled(
+                metas.firstOrNull { it.key == MangaVisibility.HIDE_FROM_UPDATES }?.value,
+            )
+        }
 
     fun categories(dataFetchingEnvironment: DataFetchingEnvironment): CompletableFuture<CategoryNodeList> =
         dataFetchingEnvironment.getValueFromDataLoader<Int, CategoryNodeList>("CategoriesForMangaDataLoader", id)

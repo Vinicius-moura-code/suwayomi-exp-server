@@ -3,7 +3,7 @@ name: suwayomi-roadmap
 description: Use this skill when working on any improvement, bug fix, or new feature from my personal development plan for Suwayomi-Server. Always combine with suwayomi-java-kotlin skill.
 ---
 
-# Suwayomi-Server — Meu Roadmap Pessoal
+# suwayomi-exp-server — Meu Roadmap Pessoal
 
 ## Objetivo Geral
 Desenvolver melhorias de qualidade, correções e novas funcionalidades no fork pessoal, com possibilidade de contribuir de volta no futuro.
@@ -33,15 +33,13 @@ Desenvolver melhorias de qualidade, correções e novas funcionalidades no fork 
 - Filtros e busca
 - Retry / capítulos confiáveis
 
-### Fase 4: Melhorias na WebUI (Cliente) — PRÓXIMA
-- Botão para limpar histórico completamente
-- Categorias com bloqueio de privacidade (obras sensíveis)
-- Opção de ocultar obras específicas do Histórico e da aba Updates
-- Marcar como lido em massa
-- Melhorias gerais de usabilidade e organização
+### Fase 4: Melhorias no cliente — EM ANDAMENTO
+- [x] **Corte A (Server + UI):** ocultar obras do Histórico/Updates (`MangaVisibility`, `updateMangaVisibility`, filtros `excludeHiddenFrom*`, toggles na manga screen)
+- [ ] Corte B: limpar histórico (mutation GraphQL)
+- [ ] Corte C: categorias com flag de privacidade
+- Marcar como lido em massa / usabilidade geral
 
-No Server: entregar APIs GraphQL primeiro. WebUI em repo separado.
-Cortes sugeridos: A ocultar Histórico/Updates | B limpar histórico | C privacidade categorias | D A+B.
+No Server: APIs GraphQL primeiro. UI em `F:\workspace\suwayomi-exp\suwayomi-exp-ui`.
 
 ## Princípios de Desenvolvimento
 
@@ -60,8 +58,8 @@ Sempre que eu mencionar qualquer task deste roadmap:
 - Mantenha o escopo pequeno
 - Inclua testes quando aplicável
 - Pense em como a mudança pode ser documentada
-- Continuidade pós-move: ver `F:\workspace\suwayomi-exp\CONTEXT.md`
+- Continuidade do hub: `F:\workspace\suwayomi-exp\CONTEXT.md` (+ `AGENTS.md` do hub)
 
 ---
 
-**Status atual**: Fase 3 pausada. Próximo: Fase 4 (escolher corte A/B/C/D).
+**Status atual**: Fase 4 corte A (Server + UI) feito. Próximo: corte B/C. Hub em `suwayomi-exp`.

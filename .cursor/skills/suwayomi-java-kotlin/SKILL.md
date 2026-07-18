@@ -118,7 +118,7 @@ Use `handler(...)` + `pathParam` / `queryParam` / `withOperation` OpenAPI docs, 
 - **Jackson version** is tied to Javalin.
 - Config/settings types may live in `server-config`; regenerate/config docs if you touch generated surfaces.
 - `sourceReference` column maps manga source id (field name `source` is reserved on Exposed id tables).
-- WebUI is a separate repo (`Suwayomi-WebUI`); this server only serves/bundles it.
+- WebUI is a separate repo (`suwayomi-exp-ui`); this server only serves/bundles it.
 
 ## Contribution checklist
 
