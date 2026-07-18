@@ -1,0 +1,51 @@
+# Example production stack for Suwayomi Exp Server
+#
+# 1. Replace YOURUSER with your Docker Hub username
+# 2. docker compose pull && docker compose up -d
+#
+# Volumes match the classic Suwayomi Docker layout.
+# FlareSolverr / Tor are optional extras you already use — keep or drop.
+
+services:
+  tachidesk:
+    image: YOURUSER/suwayomi-exp-server:stable
+    container_name: tachidesk-server
+    environment:
+      - FLARESOLVERR_ENABLED=true
+      - FLARESOLVERR_URL=http://flaresolverr:8191
+      - TZ=America/Sao_Paulo
+      # Defaults already baked in; override only if needed:
+      # - WEB_UI_FLAVOR=ExpUI
+      # - WEB_UI_UPDATE_INTERVAL=0
+    volumes:
+      - ./downloads:/home/suwayomi/.local/share/Tachidesk/downloads
+      - ./config:/home/suwayomi/.local/share/Tachidesk
+    ports:
+      - "127.0.0.1:4567:4567"
+    depends_on:
+      - flaresolverr
+    # networks:
+    #   - default
+    #   - proxy_network
+    restart: unless-stopped
+
+  flaresolverr:
+    image: ghcr.io/flaresolverr/flaresolverr:latest
+    container_name: flaresolverr
+    environment:
+      - TZ=America/Sao_Paulo
+      - LOG_LEVEL=info
+      # - PROXY=http://tor-proxy:8118
+    shm_size: "2gb"
+    # depends_on:
+    #   - tor-proxy
+    deploy:
+      resources:
+        limits:
+          cpus: "0.50"
+          memory: 1024M
+    restart: unless-stopped
+
+# networks:
+#   proxy_network:
+#     external: true
