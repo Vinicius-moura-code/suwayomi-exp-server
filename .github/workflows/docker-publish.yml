@@ -72,7 +72,10 @@ jobs:
         working-directory: suwayomi-exp-server
         env:
           ProductName: Suwayomi-Exp-Server
-        run: ./gradlew :server:shadowJar --no-daemon
+        run: |
+          mkdir -p ~/.gradle
+          cp .github/runner-files/ci-gradle.properties ~/.gradle/gradle.properties
+          ./gradlew :server:shadowJar --no-daemon --stacktrace
 
       - name: Stage jar
         working-directory: suwayomi-exp-server
