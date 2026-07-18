@@ -72,6 +72,8 @@ jobs:
         working-directory: suwayomi-exp-server
         env:
           ProductName: Suwayomi-Exp-Server
+          # Extra guard if user gradle.properties is ignored for any reason
+          GRADLE_OPTS: -Xmx6144m -Dorg.gradle.daemon=false
         run: |
           mkdir -p ~/.gradle
           cp .github/runner-files/ci-gradle.properties ~/.gradle/gradle.properties
