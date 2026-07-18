@@ -20,7 +20,7 @@ Defaults inside the image:
 
 | Env | Default |
 |-----|---------|
-| `WEB_UI_FLAVOR` | `ExpUI` |
+| `WEB_UI_FLAVOR` | `EXPUUI` (product name: ExpUI) |
 | `WEB_UI_UPDATE_INTERVAL` | `0` |
 | `KCEF_ENABLED` | `false` |
 

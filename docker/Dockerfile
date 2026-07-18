@@ -59,7 +59,7 @@ RUN chmod 755 /home/suwayomi/create_server_conf.sh \
 
 ENV HOME=/home/suwayomi \
     TZ=Etc/UTC \
-    WEB_UI_FLAVOR=ExpUI \
+    WEB_UI_FLAVOR=EXPUUI \
     WEB_UI_UPDATE_INTERVAL=0 \
     KCEF_ENABLED=false
 
