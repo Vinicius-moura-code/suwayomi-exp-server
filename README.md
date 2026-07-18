@@ -40,7 +40,7 @@ Configuration notes live under [`docs/`](./docs/). Upstream wiki remains useful 
 
 ## Docker (production)
 
-Image ships with **ExpUI baked in** (`WEB_UI_FLAVOR=ExpUI`). Layout matches classic Suwayomi Docker (`/home/suwayomi/.local/share/Tachidesk`).
+Image ships with **ExpUI baked in** (`WEB_UI_FLAVOR=EXPUUI`). Layout matches classic Suwayomi Docker (`/home/suwayomi/.local/share/Tachidesk`).
 
 ```bash
 # Local image (needs sibling ../suwayomi-exp-ui)

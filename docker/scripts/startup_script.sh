@@ -15,7 +15,7 @@ echo "Suwayomi Exp data location: /home/suwayomi/.local/share/Tachidesk"
 export TZ="${TZ:-Etc/UTC}"
 
 # Exp defaults (overridable via env)
-export WEB_UI_FLAVOR="${WEB_UI_FLAVOR:-ExpUI}"
+export WEB_UI_FLAVOR="${WEB_UI_FLAVOR:-EXPUUI}"
 export WEB_UI_UPDATE_INTERVAL="${WEB_UI_UPDATE_INTERVAL:-0}"
 export KCEF_ENABLED="${KCEF_ENABLED:-false}"
 
