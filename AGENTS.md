@@ -72,15 +72,21 @@ Com o server rodando:
 `/api/metrics` fica **sem auth** de propósito (scrape local via Docker). Não expor em produção sem rede/auth.
 
 ### Fase 3: Melhorias no Tracking
+- **Status: PAUSADA** (trackers de terceiros — outra frente)
 - Corrigir problemas existentes de tracking
 - Adicionar persistência inteligente
-- Melhorar filtros e busca de obras (principal dor atual)
+- Melhorar filtros e busca de obras
 
-### Fase 4: Melhorias na WebUI
+### Fase 4: Melhorias na WebUI — **PRÓXIMA**
 - Botão para limpar histórico
 - Categorias com bloqueio de privacidade/segurança
 - Opção de ocultar obras do histórico e da aba "Updates"
 - Outras melhorias de usabilidade
+
+Neste repo (Server): começar pelas **APIs GraphQL** que habilitam a UI.
+WebUI é outro repositório. Cortes sugeridos: A ocultar Histórico/Updates | B limpar histórico | C privacidade em categorias | D A+B.
+
+Hub de continuidade (após move): `F:\workspace\suwayomi-exp\CONTEXT.md`
 
 ## Regras Importantes para o Agent
 - Sempre respeitar a arquitetura atual do projeto (GraphQL first, layers bem definidas)
