@@ -38,6 +38,22 @@ See [`AGENTS.md`](./AGENTS.md) for the current roadmap.
 
 Configuration notes live under [`docs/`](./docs/). Upstream wiki remains useful for many server concepts: [Suwayomi-Server wiki](https://github.com/Suwayomi/Suwayomi-Server/wiki).
 
+## Docker (production)
+
+Image ships with **ExpUI baked in** (`WEB_UI_FLAVOR=ExpUI`). Layout matches classic Suwayomi Docker (`/home/suwayomi/.local/share/Tachidesk`).
+
+```bash
+# Local image (needs sibling ../suwayomi-exp-ui)
+./scripts/docker/build.sh
+
+# Example stack (edit YOURUSER)
+cp deploy/docker-compose.example.yml docker-compose.prod.yml
+```
+
+CI: tag `v*` (or Actions → **Docker Publish**) pushes to Docker Hub as `YOURUSER/suwayomi-exp-server` (`stable` / `latest` / semver).
+
+Secrets: `DOCKERHUB_USERNAME`, `DOCKERHUB_TOKEN`. Details: [`docker/README.md`](./docker/README.md).
+
 ## Development
 
 Requirements: **JDK 21+**, Docker (optional, for Postgres).

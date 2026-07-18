@@ -24,14 +24,17 @@ scripts/dev/monitoring-up.sh      # Prometheus + Grafana
 scripts/dev/test.sh               # ./gradlew :server:test
 scripts/dev/logs.sh               # logs do Compose
 scripts/dev/down.sh               # derruba a stack (infra/app/monitoring)
+scripts/docker/build.sh           # imagem prod (ExpUI embutido) → Docker local
 ```
 
 App 100% no container (opcional): `docker compose --profile app up --build`
 
 **UI oficial deste fork:** Flavor **`ExpUI`** (default). Serve `%LOCALAPPDATA%/Tachidesk/webUI` (ou `~/.local/share/Tachidesk/webUI`); sem download GitHub. Dev hot-reload da UI: repo `suwayomi-exp-ui` em `:3000`.
 
+**Imagem Docker de produção:** `docker/Dockerfile` + `.github/workflows/docker-publish.yml` (Docker Hub). ExpUI vai embutido em `/opt/suwayomi-exp/webUI` e é copiado para o volume na subida. Exemplo: `deploy/docker-compose.example.yml`.
+
 **Importante:** no fluxo Gradle, use `-Dsuwayomi.tachidesk.config.server.*` (ou `scripts/dev/run.sh`).
-Vars `DATABASE_*` / `BIND_*` são do entrypoint da imagem oficial, não do `:server:run`.
+Vars `DATABASE_*` / `BIND_*` / `FLARESOLVERR_*` são do **entrypoint Docker** (imagem prod), não do `:server:run`.
 URL do Postgres **sem** prefixo `jdbc:` (o server adiciona).
 
 ### Fase 2: Monitoring e Observabilidade
