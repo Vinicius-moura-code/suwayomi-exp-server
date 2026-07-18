@@ -16,7 +16,7 @@ description: Develop Java/Kotlin features in Suwayomi-Server using Javalin, Grap
 - **Lint**: ktlint (runs as dependency of Kotlin compile); respect `.editorconfig`
 - **License header**: MPL-2.0 copyright block on new source files (match neighbors)
 
-Project vision (from `CONTRIBUTING.md`): prefer Mihon/Tachiyomi-aligned features; keep PRs small (one meaningful change); PRs are squashed.
+Project vision (from hub/AGENTS): prefer Mihon/Tachiyomi-aligned features; keep PRs small (one meaningful change).
 
 ## Modules
 
