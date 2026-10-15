@@ -39,6 +39,7 @@ import suwayomi.tachidesk.graphql.server.primitives.lessNotUnique
 import suwayomi.tachidesk.graphql.server.primitives.maybeSwap
 import suwayomi.tachidesk.graphql.types.CategoryNodeList
 import suwayomi.tachidesk.graphql.types.CategoryType
+import suwayomi.tachidesk.manga.impl.CategoryPrivacy
 import suwayomi.tachidesk.manga.model.table.CategoryTable
 import java.util.concurrent.CompletableFuture
 
@@ -48,6 +49,12 @@ class CategoryQuery {
         dataFetchingEnvironment: DataFetchingEnvironment,
         id: Int,
     ): CompletableFuture<CategoryType> = dataFetchingEnvironment.getValueFromDataLoader("CategoryDataLoader", id)
+
+    @RequireAuth
+    fun hasPrivateCategoriesPassword(): Boolean = CategoryPrivacy.hasPassword()
+
+    @RequireAuth
+    fun privateMangaIds(): List<Int> = CategoryPrivacy.privateMangaIds()
 
     enum class CategoryOrderBy(
         override val column: Column<*>,

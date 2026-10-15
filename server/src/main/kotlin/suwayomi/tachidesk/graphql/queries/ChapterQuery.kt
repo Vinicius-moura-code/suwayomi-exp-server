@@ -43,6 +43,7 @@ import suwayomi.tachidesk.graphql.server.primitives.lessNotUnique
 import suwayomi.tachidesk.graphql.server.primitives.maybeSwap
 import suwayomi.tachidesk.graphql.types.ChapterNodeList
 import suwayomi.tachidesk.graphql.types.ChapterType
+import suwayomi.tachidesk.manga.impl.CategoryPrivacy
 import suwayomi.tachidesk.manga.impl.MangaVisibility
 import suwayomi.tachidesk.manga.model.table.ChapterTable
 import suwayomi.tachidesk.manga.model.table.MangaTable
@@ -236,14 +237,16 @@ class ChapterQuery {
                 }
 
                 if (filter?.excludeHiddenFromHistory == true) {
-                    val hiddenIds = MangaVisibility.mangaIdsWithFlag(MangaVisibility.HIDE_FROM_HISTORY)
+                    val hiddenIds =
+                        (MangaVisibility.mangaIdsWithFlag(MangaVisibility.HIDE_FROM_HISTORY) + CategoryPrivacy.privateMangaIds()).distinct()
                     if (hiddenIds.isNotEmpty()) {
                         res.andWhere { ChapterTable.manga notInList hiddenIds }
                     }
                 }
 
                 if (filter?.excludeHiddenFromUpdates == true) {
-                    val hiddenIds = MangaVisibility.mangaIdsWithFlag(MangaVisibility.HIDE_FROM_UPDATES)
+                    val hiddenIds =
+                        (MangaVisibility.mangaIdsWithFlag(MangaVisibility.HIDE_FROM_UPDATES) + CategoryPrivacy.privateMangaIds()).distinct()
                     if (hiddenIds.isNotEmpty()) {
                         res.andWhere { ChapterTable.manga notInList hiddenIds }
                     }

@@ -15,6 +15,7 @@ import suwayomi.tachidesk.graphql.server.primitives.Edge
 import suwayomi.tachidesk.graphql.server.primitives.Node
 import suwayomi.tachidesk.graphql.server.primitives.NodeList
 import suwayomi.tachidesk.graphql.server.primitives.PageInfo
+import suwayomi.tachidesk.manga.impl.CategoryPrivacy
 import suwayomi.tachidesk.manga.model.dataclass.CategoryDataClass
 import suwayomi.tachidesk.manga.model.dataclass.IncludeOrExclude
 import suwayomi.tachidesk.manga.model.table.CategoryTable
@@ -51,6 +52,16 @@ class CategoryType(
 
     fun meta(dataFetchingEnvironment: DataFetchingEnvironment): CompletableFuture<List<CategoryMetaType>> =
         dataFetchingEnvironment.getValueFromDataLoader<Int, List<CategoryMetaType>>("CategoryMetaDataLoader", id)
+
+    fun isPrivate(dataFetchingEnvironment: DataFetchingEnvironment): CompletableFuture<Boolean> =
+        meta(dataFetchingEnvironment).thenApply { metas ->
+            CategoryPrivacy.isEnabled(metas.firstOrNull { it.key == CategoryPrivacy.PRIVATE }?.value)
+        }
+
+    fun showWhenLocked(dataFetchingEnvironment: DataFetchingEnvironment): CompletableFuture<Boolean> =
+        meta(dataFetchingEnvironment).thenApply { metas ->
+            CategoryPrivacy.isEnabled(metas.firstOrNull { it.key == CategoryPrivacy.SHOW_WHEN_LOCKED }?.value)
+        }
 }
 
 data class CategoryNodeList(

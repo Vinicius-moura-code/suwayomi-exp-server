@@ -25,6 +25,7 @@ import suwayomi.tachidesk.graphql.types.MangaType
 import suwayomi.tachidesk.graphql.types.MetaInput
 import suwayomi.tachidesk.manga.impl.Category
 import suwayomi.tachidesk.manga.impl.CategoryManga
+import suwayomi.tachidesk.manga.impl.CategoryPrivacy
 import suwayomi.tachidesk.manga.impl.util.lang.isEmpty
 import suwayomi.tachidesk.manga.model.dataclass.IncludeOrExclude
 import suwayomi.tachidesk.manga.model.table.CategoryMangaTable
@@ -33,6 +34,72 @@ import suwayomi.tachidesk.manga.model.table.CategoryTable
 import suwayomi.tachidesk.manga.model.table.MangaTable
 
 class CategoryMutation {
+    data class UpdateCategoryPrivacyInput(
+        val clientMutationId: String? = null,
+        val categoryId: Int,
+        val isPrivate: Boolean? = null,
+        val showWhenLocked: Boolean? = null,
+    )
+
+    data class UpdateCategoryPrivacyPayload(
+        val clientMutationId: String?,
+        val category: CategoryType,
+    )
+
+    @RequireAuth
+    fun updateCategoryPrivacy(input: UpdateCategoryPrivacyInput): UpdateCategoryPrivacyPayload? {
+        val (clientMutationId, categoryId, isPrivate, showWhenLocked) = input
+
+        CategoryPrivacy.updatePrivacy(categoryId, isPrivate, showWhenLocked)
+
+        val category =
+            transaction {
+                CategoryType(CategoryTable.selectAll().where { CategoryTable.id eq categoryId }.first())
+            }
+
+        return UpdateCategoryPrivacyPayload(clientMutationId, category)
+    }
+
+    data class VerifyPrivateCategoriesPasswordInput(
+        val clientMutationId: String? = null,
+        val password: String,
+    )
+
+    data class VerifyPrivateCategoriesPasswordPayload(
+        val clientMutationId: String?,
+        val unlocked: Boolean,
+    )
+
+    @RequireAuth
+    fun verifyPrivateCategoriesPassword(input: VerifyPrivateCategoriesPasswordInput): VerifyPrivateCategoriesPasswordPayload? {
+        val (clientMutationId, password) = input
+
+        val unlocked = !CategoryPrivacy.hasPassword() || CategoryPrivacy.verifyPassword(password)
+
+        return VerifyPrivateCategoriesPasswordPayload(clientMutationId, unlocked)
+    }
+
+    data class SetPrivateCategoriesPasswordInput(
+        val clientMutationId: String? = null,
+        val currentPassword: String? = null,
+        val newPassword: String? = null,
+    )
+
+    data class SetPrivateCategoriesPasswordPayload(
+        val clientMutationId: String?,
+        val success: Boolean,
+        val hasPassword: Boolean,
+    )
+
+    @RequireAuth
+    fun setPrivateCategoriesPassword(input: SetPrivateCategoriesPasswordInput): SetPrivateCategoriesPasswordPayload? {
+        val (clientMutationId, currentPassword, newPassword) = input
+
+        val success = CategoryPrivacy.setPassword(currentPassword, newPassword)
+
+        return SetPrivateCategoriesPasswordPayload(clientMutationId, success, CategoryPrivacy.hasPassword())
+    }
+
     data class SetCategoryMetaInput(
         val clientMutationId: String? = null,
         val meta: CategoryMetaType,
