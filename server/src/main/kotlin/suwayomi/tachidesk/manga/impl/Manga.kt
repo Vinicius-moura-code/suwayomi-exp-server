@@ -40,6 +40,8 @@ import org.jetbrains.exposed.v1.jdbc.statements.toExecutable
 import org.jetbrains.exposed.v1.jdbc.transactions.transaction
 import org.jetbrains.exposed.v1.jdbc.update
 import suwayomi.tachidesk.manga.impl.download.fileProvider.impl.MissingThumbnailException
+import suwayomi.tachidesk.manga.impl.sourcehealth.SourceHealthRecorder
+import suwayomi.tachidesk.manga.impl.sourcehealth.SourceHealthStage
 import suwayomi.tachidesk.manga.impl.util.network.await
 import suwayomi.tachidesk.manga.impl.util.source.GetSource.getSourceOrNull
 import suwayomi.tachidesk.manga.impl.util.source.GetSource.getSourceOrStub
@@ -127,12 +129,20 @@ object Manga {
                     }
             }
 
-        return source.getMangaUpdate(
-            sManga,
-            sChapters,
-            fetchDetails = fetchDetails,
-            fetchChapters = fetchChapters,
-        )
+        // a call fetching both is attributed to the chapters, which is the heavier part
+        return SourceHealthRecorder.measure(
+            source = source,
+            stage = if (fetchChapters) SourceHealthStage.CHAPTERS else SourceHealthStage.DETAILS,
+            mangaId = mangaEntry[MangaTable.id].value,
+            isEmpty = { fetchChapters && it.chapters.isEmpty() },
+        ) {
+            source.getMangaUpdate(
+                sManga,
+                sChapters,
+                fetchDetails = fetchDetails,
+                fetchChapters = fetchChapters,
+            )
+        }
     }
 
     suspend fun fetchManga(mangaId: Int): SManga? {
@@ -416,7 +426,9 @@ object Manga {
         return when (val source = getSourceOrStub(sourceId)) {
             is HttpSource -> {
                 getImageResponse(cacheSaveDir, fileName) {
-                    fetchHttpSourceMangaThumbnail(source, mangaEntry)
+                    SourceHealthRecorder.measure(source, SourceHealthStage.THUMBNAIL, mangaId) {
+                        fetchHttpSourceMangaThumbnail(source, mangaEntry)
+                    }
                 }
             }
 

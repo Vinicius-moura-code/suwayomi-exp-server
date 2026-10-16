@@ -24,6 +24,8 @@ import org.jetbrains.exposed.v1.jdbc.selectAll
 import org.jetbrains.exposed.v1.jdbc.transactions.transaction
 import org.jetbrains.exposed.v1.jdbc.update
 import suwayomi.tachidesk.manga.impl.ChapterDownloadHelper
+import suwayomi.tachidesk.manga.impl.sourcehealth.SourceHealthRecorder
+import suwayomi.tachidesk.manga.impl.sourcehealth.SourceHealthStage
 import suwayomi.tachidesk.manga.impl.util.source.GetSource.getSourceOrStub
 import suwayomi.tachidesk.manga.model.dataclass.ChapterDataClass
 import suwayomi.tachidesk.manga.model.table.ChapterTable
@@ -81,17 +83,19 @@ suspend fun refreshChapterPageList(
         val source = getSourceOrStub(mangaEntry[MangaTable.sourceReference])
 
         val pageList =
-            source
-                .getPageList(
-                    SChapter.create().apply {
-                        url = chapterEntry[ChapterTable.url]
-                        name = chapterEntry[ChapterTable.name]
-                        scanlator = chapterEntry[ChapterTable.scanlator]
-                        chapter_number = chapterEntry[ChapterTable.chapter_number]
-                        date_upload = chapterEntry[ChapterTable.date_upload]
-                        memo = Json.decodeFromString(chapterEntry[ChapterTable.memo])
-                    },
-                ).mapIndexed { index, page -> Page(index, page.url, page.imageUrl, page.uri) }
+            SourceHealthRecorder
+                .measure(source, SourceHealthStage.PAGES, mangaId, isEmpty = { it.isEmpty() }) {
+                    source.getPageList(
+                        SChapter.create().apply {
+                            url = chapterEntry[ChapterTable.url]
+                            name = chapterEntry[ChapterTable.name]
+                            scanlator = chapterEntry[ChapterTable.scanlator]
+                            chapter_number = chapterEntry[ChapterTable.chapter_number]
+                            date_upload = chapterEntry[ChapterTable.date_upload]
+                            memo = Json.decodeFromString(chapterEntry[ChapterTable.memo])
+                        },
+                    )
+                }.mapIndexed { index, page -> Page(index, page.url, page.imageUrl, page.uri) }
 
         transaction {
             ChapterTable.update({ ChapterTable.id eq chapterId }) {

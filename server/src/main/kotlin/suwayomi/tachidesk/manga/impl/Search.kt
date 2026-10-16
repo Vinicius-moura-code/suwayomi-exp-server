@@ -14,6 +14,8 @@ import io.javalin.json.JsonMapper
 import io.javalin.json.fromJsonString
 import kotlinx.serialization.Serializable
 import suwayomi.tachidesk.manga.impl.MangaList.processEntries
+import suwayomi.tachidesk.manga.impl.sourcehealth.SourceHealthRecorder
+import suwayomi.tachidesk.manga.impl.sourcehealth.SourceHealthStage
 import suwayomi.tachidesk.manga.impl.util.source.GetSource.getSourceOrStub
 import suwayomi.tachidesk.manga.model.dataclass.PagedMangaListDataClass
 import uy.kohesive.injekt.injectLazy
@@ -25,7 +27,10 @@ object Search {
         pageNum: Int,
     ): PagedMangaListDataClass {
         val source = getSourceOrStub(sourceId)
-        val searchManga = source.getSearchManga(pageNum, searchTerm, getFilterListOf(source))
+        val searchManga =
+            SourceHealthRecorder.measure(source, SourceHealthStage.LISTING) {
+                source.getSearchManga(pageNum, searchTerm, getFilterListOf(source))
+            }
         return searchManga.processEntries(sourceId)
     }
 
@@ -36,7 +41,10 @@ object Search {
     ): PagedMangaListDataClass {
         val source = getSourceOrStub(sourceId)
         val filterList = if (filter.filter != null) buildFilterList(sourceId, filter.filter) else source.getFilterList()
-        val searchManga = source.getSearchManga(pageNum, filter.searchTerm ?: "", filterList)
+        val searchManga =
+            SourceHealthRecorder.measure(source, SourceHealthStage.LISTING) {
+                source.getSearchManga(pageNum, filter.searchTerm ?: "", filterList)
+            }
         return searchManga.processEntries(sourceId)
     }
 

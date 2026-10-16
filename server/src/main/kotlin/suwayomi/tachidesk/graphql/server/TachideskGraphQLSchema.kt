@@ -28,6 +28,7 @@ import suwayomi.tachidesk.graphql.mutations.KoreaderSyncMutation
 import suwayomi.tachidesk.graphql.mutations.MangaMutation
 import suwayomi.tachidesk.graphql.mutations.MetaMutation
 import suwayomi.tachidesk.graphql.mutations.SettingsMutation
+import suwayomi.tachidesk.graphql.mutations.SourceHealthMutation
 import suwayomi.tachidesk.graphql.mutations.SourceMutation
 import suwayomi.tachidesk.graphql.mutations.SyncMutation
 import suwayomi.tachidesk.graphql.mutations.TrackMutation
@@ -45,6 +46,7 @@ import suwayomi.tachidesk.graphql.queries.KoreaderSyncQuery
 import suwayomi.tachidesk.graphql.queries.MangaQuery
 import suwayomi.tachidesk.graphql.queries.MetaQuery
 import suwayomi.tachidesk.graphql.queries.SettingsQuery
+import suwayomi.tachidesk.graphql.queries.SourceHealthQuery
 import suwayomi.tachidesk.graphql.queries.SourceQuery
 import suwayomi.tachidesk.graphql.queries.SyncQuery
 import suwayomi.tachidesk.graphql.queries.TrackQuery
@@ -106,6 +108,7 @@ val schema =
                 TopLevelObject(MangaQuery()),
                 TopLevelObject(MetaQuery()),
                 TopLevelObject(SettingsQuery()),
+                TopLevelObject(SourceHealthQuery()),
                 TopLevelObject(SourceQuery()),
                 TopLevelObject(SyncQuery()),
                 TopLevelObject(TrackQuery()),
@@ -127,6 +130,7 @@ val schema =
                 TopLevelObject(MetaMutation()),
                 TopLevelObject(SettingsMutation()),
                 TopLevelObject(SyncMutation()),
+                TopLevelObject(SourceHealthMutation()),
                 TopLevelObject(SourceMutation()),
                 TopLevelObject(TrackMutation()),
                 TopLevelObject(UpdateMutation()),

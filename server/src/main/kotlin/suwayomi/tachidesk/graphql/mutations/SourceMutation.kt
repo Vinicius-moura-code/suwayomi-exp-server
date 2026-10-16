@@ -28,6 +28,8 @@ import suwayomi.tachidesk.graphql.types.preferenceOf
 import suwayomi.tachidesk.graphql.types.updateFilterList
 import suwayomi.tachidesk.manga.impl.MangaList.insertOrUpdate
 import suwayomi.tachidesk.manga.impl.Source
+import suwayomi.tachidesk.manga.impl.sourcehealth.SourceHealthRecorder
+import suwayomi.tachidesk.manga.impl.sourcehealth.SourceHealthStage
 import suwayomi.tachidesk.manga.impl.util.source.GetSource
 import suwayomi.tachidesk.manga.model.table.MangaTable
 import suwayomi.tachidesk.manga.model.table.SourceMetaTable
@@ -257,23 +259,26 @@ class SourceMutation {
 
         return future {
             val source = GetSource.getSourceOrNull(sourceId)!!
+            if (type == FetchSourceMangaType.LATEST && !source.supportsLatest) throw Exception("Source does not support latest")
+
             val mangasPage =
-                when (type) {
-                    FetchSourceMangaType.SEARCH -> {
-                        source.getSearchManga(
-                            page = page,
-                            query = query.orEmpty(),
-                            filters = updateFilterList(source, filters),
-                        )
-                    }
+                SourceHealthRecorder.measure(source, SourceHealthStage.LISTING) {
+                    when (type) {
+                        FetchSourceMangaType.SEARCH -> {
+                            source.getSearchManga(
+                                page = page,
+                                query = query.orEmpty(),
+                                filters = updateFilterList(source, filters),
+                            )
+                        }
 
-                    FetchSourceMangaType.POPULAR -> {
-                        source.getPopularManga(page)
-                    }
+                        FetchSourceMangaType.POPULAR -> {
+                            source.getPopularManga(page)
+                        }
 
-                    FetchSourceMangaType.LATEST -> {
-                        if (!source.supportsLatest) throw Exception("Source does not support latest")
-                        source.getLatestUpdates(page)
+                        FetchSourceMangaType.LATEST -> {
+                            source.getLatestUpdates(page)
+                        }
                     }
                 }
 

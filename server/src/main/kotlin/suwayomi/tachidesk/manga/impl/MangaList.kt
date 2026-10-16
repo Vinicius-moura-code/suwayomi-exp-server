@@ -19,6 +19,8 @@ import org.jetbrains.exposed.v1.jdbc.batchInsert
 import org.jetbrains.exposed.v1.jdbc.selectAll
 import org.jetbrains.exposed.v1.jdbc.statements.toExecutable
 import org.jetbrains.exposed.v1.jdbc.transactions.transaction
+import suwayomi.tachidesk.manga.impl.sourcehealth.SourceHealthRecorder
+import suwayomi.tachidesk.manga.impl.sourcehealth.SourceHealthStage
 import suwayomi.tachidesk.manga.impl.util.source.GetSource.getSourceOrStub
 import suwayomi.tachidesk.manga.model.dataclass.PagedMangaListDataClass
 import suwayomi.tachidesk.manga.model.table.MangaTable
@@ -37,14 +39,16 @@ object MangaList {
             "pageNum = $pageNum is not in valid range"
         }
         val source = getSourceOrStub(sourceId)
+        if (!popular && !source.supportsLatest) {
+            throw Exception("Source $source doesn't support latest")
+        }
+
         val mangasPage =
-            if (popular) {
-                source.getPopularManga(pageNum)
-            } else {
-                if (source.supportsLatest) {
-                    source.getLatestUpdates(pageNum)
+            SourceHealthRecorder.measure(source, SourceHealthStage.LISTING) {
+                if (popular) {
+                    source.getPopularManga(pageNum)
                 } else {
-                    throw Exception("Source $source doesn't support latest")
+                    source.getLatestUpdates(pageNum)
                 }
             }
         return mangasPage.processEntries(sourceId)

@@ -69,8 +69,9 @@ echo "${REV}" > "${BUILD_DIR}/revision"
 
 EXPUI_DEST="${SERVER_ROOT}/docker/expui"
 echo "==> Copying ExpUI → ${EXPUI_DEST} (${REV})"
-rm -rf "${EXPUI_DEST}"
 mkdir -p "${EXPUI_DEST}"
+# Keep tracked placeholders (.gitkeep) so the working tree stays clean.
+find "${EXPUI_DEST}" -mindepth 1 -not -name '.gitkeep' -delete 2>/dev/null || true
 cp -a "${BUILD_DIR}/." "${EXPUI_DEST}/"
 
 echo "==> Building server jar (ProductName=${PRODUCT_NAME})"
@@ -80,10 +81,11 @@ echo "==> Building server jar (ProductName=${PRODUCT_NAME})"
   ./gradlew :server:shadowJar --no-daemon
 )
 
-JAR="$(ls -1 "${SERVER_ROOT}/server/build/${PRODUCT_NAME}"-*.jar 2>/dev/null | head -n1 || true)"
+# Newest jar wins: old builds may linger in server/build/ and sort first by name.
+JAR="$(ls -1t "${SERVER_ROOT}/server/build/${PRODUCT_NAME}"-*.jar 2>/dev/null | head -n1 || true)"
 if [[ -z "${JAR}" || ! -f "${JAR}" ]]; then
-  # fallback: any jar in build that is not -plain
-  JAR="$(ls -1 "${SERVER_ROOT}/server/build/"*.jar 2>/dev/null | grep -v plain | head -n1 || true)"
+  # fallback: newest jar in build that is not -plain
+  JAR="$(ls -1t "${SERVER_ROOT}/server/build/"*.jar 2>/dev/null | grep -v plain | head -n1 || true)"
 fi
 if [[ -z "${JAR}" || ! -f "${JAR}" ]]; then
   echo "Server jar not found under server/build/" >&2

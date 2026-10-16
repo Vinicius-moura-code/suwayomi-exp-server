@@ -20,6 +20,8 @@ import org.jetbrains.exposed.v1.jdbc.selectAll
 import org.jetbrains.exposed.v1.jdbc.transactions.transaction
 import org.jetbrains.exposed.v1.jdbc.update
 import suwayomi.tachidesk.graphql.types.DownloadConversion
+import suwayomi.tachidesk.manga.impl.sourcehealth.SourceHealthRecorder
+import suwayomi.tachidesk.manga.impl.sourcehealth.SourceHealthStage
 import suwayomi.tachidesk.manga.impl.util.getChapterCachePath
 import suwayomi.tachidesk.manga.impl.util.source.GetSource.getSourceOrStub
 import suwayomi.tachidesk.manga.impl.util.storage.ImageResponse.getImageResponse
@@ -122,7 +124,11 @@ object Page {
         source as HttpSource
 
         if (pageEntry[PageTable.imageUrl] == null) {
-            val trueImageUrl = getTrueImageUrl(tachiyomiPage, source)
+            // only failures: resolving the url is part of loading the image, which is recorded below
+            val trueImageUrl =
+                SourceHealthRecorder.measure(source, SourceHealthStage.IMAGE, mangaId, recordSuccess = false) {
+                    getTrueImageUrl(tachiyomiPage, source)
+                }
             transaction {
                 PageTable.update({ (PageTable.chapter eq chapterId) and (PageTable.index eq index) }) {
                     it[imageUrl] = trueImageUrl
@@ -136,7 +142,9 @@ object Page {
 
         // Note: don't care about invalidating cache because OS cache is not permanent
         return getImageResponse(cacheSaveDir, fileName) {
-            source.getImage(tachiyomiPage)
+            SourceHealthRecorder.measure(source, SourceHealthStage.IMAGE, mangaId) {
+                source.getImage(tachiyomiPage)
+            }
         }
     }
 
